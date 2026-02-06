@@ -18,12 +18,18 @@ groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 # ===============================
 # DATABASE
 # ===============================
-db = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    password="",
-    database="ai_viva_examiner"
-)
+def get_db_connection():
+    try:
+        return mysql.connector.connect(
+            host=os.getenv("DB_HOST"),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASS"),
+            database=os.getenv("DB_NAME"),
+            port=int(os.getenv("DB_PORT", 3306))
+        )
+    except Exception as e:
+        print("DB Error:", e)
+        return None
 
 # ===============================
 # AI – VIVA QUESTION
@@ -654,3 +660,4 @@ def logout():
 # ===============================
 if __name__ == "__main__":
     app.run(debug=True)
+
