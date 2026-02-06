@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IntelliMent - AI Powered Career Platform</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000;
+            min-height: 100vh;
+            color: #ffffff;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* DIM & BLUR BACKGROUND */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('{{ url_for("static", filename="images/bg.jpg") }}');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            filter: blur(8px) brightness(40%);
+            transform: scale(1.1);
+            z-index: -1;
+        }
+
+        /* HEADER */
+        .header {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            padding: 15px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            text-decoration: none;
+        }
+
+        .logo-img {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+        }
+
+        .logo-text {
+            font-size: 1.8rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #fff, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .nav-btn {
+            padding: 10px 22px;
+            border-radius: 50px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: #f59e0b;
+        }
+
+        .register-btn {
+            background: linear-gradient(145deg, #f59e0b, #d97706);
+            padding: 12px 28px;
+            border-radius: 50px;
+            color: #fff;
+            text-decoration: none;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+        }
+
+        /* HERO SECTION */
+        .hero {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .main-title h1 {
+            font-size: clamp(4rem, 12vw, 8rem);
+            font-weight: 900;
+            letter-spacing: -2px;
+            background: linear-gradient(to bottom, #ffffff, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0px 10px 30px rgba(0, 0, 0, 0.8);
+        }
+
+        /* "WE MAKE YOU JOB READY" STYLE CHANGES */
+        .sub-heading p {
+            font-size: 2.2rem; /* Thoda large kar diya */
+            font-weight: 800;
+            color: #f59e0b;
+            letter-spacing: 8px;
+            text-transform: uppercase;
+            margin-top: 30px; /* Neeche shift karne ke liye */
+            text-shadow: 2px 4px 15px rgba(0, 0, 0, 1); /* Zyada bright fonts ke liye */
+        }
+
+        /* FEATURES */
+        .features-section {
+            max-width: 1200px;
+            margin: auto;
+            padding: 100px 20px;
+        }
+
+        .features-header h2 {
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 60px;
+            text-shadow: 0px 5px 15px rgba(0,0,0,0.8);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 40px;
+            transition: 0.4s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            border-color: #f59e0b;
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: #f59e0b;
+        }
+
+        .feature-title {
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .feature-desc {
+            color: #dddddd;
+            line-height: 1.6;
+        }
+
+        .scroll-indicator {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 55px;
+            height: 55px;
+            background: #f59e0b;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 100;
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="header">
+    <div class="logo">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="IntelliMent" class="logo-img">
+        <span class="logo-text">IntelliMent</span>
+    </div>
+
+    <div class="nav-buttons">
+        <a href="/student_login" class="nav-btn"><i class="fas fa-user-graduate"></i> Student Login</a>
+        <a href="/admin_login" class="nav-btn"><i class="fas fa-user-shield"></i> Admin Login</a>
+        <a href="/register" class="register-btn">Register</a>
+    </div>
+</header>
+
+<section class="hero">
+    <div class="main-title" data-aos="zoom-out" data-aos-duration="1200">
+        <h1>IntelliMent</h1>
+    </div>
+    <div class="sub-heading" data-aos="fade-up" data-aos-delay="400">
+        <p>One Platform for Learning, Practice & Evaluation</p>
+    </div>
+</section>
+
+<section class="features-section">
+    <div class="features-header" data-aos="fade-up">
+        <h2>🚀 Our Features</h2>
+    </div>
+
+    <div class="features-grid">
+        <div class="feature-card" data-aos="flip-left" data-aos-delay="100">
+            <i class="fas fa-microphone-alt feature-icon"></i>
+            <div class="feature-title">IntelliViva</div>
+            <div class="feature-desc">An AI-driven oral examination module that simulates real viva sessions and evaluates responses intelligently.</div>
+        </div>
+
+        <div class="feature-card" data-aos="flip-left" data-aos-delay="200">
+            <i class="fas fa-brain feature-icon"></i>
+            <div class="feature-title">IntelliApti</div>
+            <div class="feature-desc">A focused practice module for aptitude and logical reasoning, designed for competitive and placement exams.</div>
+        </div>
+
+        <div class="feature-card" data-aos="flip-left" data-aos-delay="300">
+            <i class="fas fa-video feature-icon"></i>
+            <div class="feature-title">IntelliMock</div>
+            <div class="feature-desc">Realistic mock tests based on actual exam patterns to help users prepare and perform better.
+</div>
+        </div>
+
+        <div class="feature-card" data-aos="flip-left" data-aos-delay="400">
+            <i class="fas fa-eye feature-icon"></i>
+            <div class="feature-title">IntelliSight</div>
+            <div class="feature-desc">An intelligent performance analysis module that highlights strengths, weaknesses, and progress.</div>
+        </div>
+    </div>
+</section>
+
+<div class="scroll-indicator" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+    <i class="fas fa-chevron-up"></i>
+</div>
+
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+    AOS.init({
+        duration: 1000,
+        once: false,
+    });
+</script>
+
+</body>
+</html>

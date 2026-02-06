@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Performance - IntelliMent</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000;
+            color: white;
+            min-height: 100vh;
+            padding: 120px 30px 40px; /* Top padding increased for fixed header */
+        }
+
+        /* PREMIUM BACKGROUND */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('{{ url_for("static", filename="images/bg.jpg") }}');
+            background-size: cover;
+            background-position: center;
+            filter: blur(15px) brightness(20%);
+            z-index: -1;
+        }
+
+        /* 🟠 HEADER WITH LOGO (UPDATED) */
+        .header {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            padding: 15px 50px;
+            display: flex;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo { 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            text-decoration: none; 
+        }
+        
+        .logo-img { 
+            width: 75px; 
+            height: 75px; 
+            border-radius: 10px; 
+            object-fit: cover;
+        }
+
+        .logo-text {
+            font-size: 1.4rem; font-weight: 900;
+            background: linear-gradient(135deg, #fff, #f59e0b);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        /* PAGE CONTENT */
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .welcome-section {
+            margin-bottom: 40px;
+            border-left: 4px solid #f59e0b;
+            padding-left: 20px;
+        }
+
+        h2 { font-size: 2.2rem; font-weight: 800; letter-spacing: -1px; }
+        .welcome-section p { color: rgba(255, 255, 255, 0.5); margin-top: 5px; }
+
+        /* TABLE STYLING */
+        .table-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+        }
+
+        thead {
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        th {
+            padding: 20px 15px;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #f59e0b;
+            font-weight: 700;
+        }
+
+        td {
+            padding: 20px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        tr:last-child td { border-bottom: none; }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.04);
+            color: #fff;
+        }
+
+        /* HIGHLIGHTS */
+        .score-pill {
+            background: #f59e0b;
+            color: #000;
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-weight: 800;
+            font-size: 0.9rem;
+        }
+
+        .section-score {
+            font-weight: 600;
+            color: #38bdf8;
+        }
+
+        .session-id {
+            font-family: 'Courier New', monospace;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+
+        /* BACK BUTTON */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 35px;
+            color: #f59e0b;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1rem;
+            transition: 0.3s;
+            padding: 10px 20px;
+            border-radius: 12px;
+            background: rgba(245, 158, 11, 0.05);
+        }
+
+        .back-link:hover {
+            background: rgba(245, 158, 11, 0.1);
+            transform: translateX(-5px);
+        }
+
+        @media (max-width: 800px) {
+            .header { padding: 15px 20px; }
+            .table-card { overflow-x: auto; }
+            th, td { min-width: 120px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <a href="/student_dashboard" class="logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo-img">
+            <span class="logo-text">IntelliMent</span>
+        </a>
+    </header>
+
+    <div class="container" data-aos="fade-up">
+        <div class="welcome-section">
+            <h2><i class="fas fa-chart-bar"></i> My Performance Hub</h2>
+            <p>Welcome back, <b>{{ name }}</b>. Here is the track record of your aptitude journey.</p>
+        </div>
+
+        <div class="table-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-hashtag"></i> Session</th>
+                        <th>Total</th>
+                        <th>Final Score</th>
+                        <th><i class="fas fa-calculator"></i> Quant</th>
+                        <th><i class="fas fa-brain"></i> Reasoning</th>
+                        <th><i class="fas fa-language"></i> Verbal</th>
+                        <th><i class="fas fa-calendar-alt"></i> Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in results %}
+                    <tr>
+                        <td class="session-id">{{ r.session_id }}</td>
+                        <td>{{ r.total_questions }}</td>
+                        <td><span class="score-pill">{{ r.score }}</span></td>
+                        <td class="section-score">{{ r.quant_score }}</td>
+                        <td class="section-score">{{ r.reasoning_score }}</td>
+                        <td class="section-score">{{ r.verbal_score }}</td>
+                        <td style="font-size: 0.85rem; color: rgba(255,255,255,0.4);">{{ r.submitted_at }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <a href="/student_dashboard" class="back-link">
+            <i class="fas fa-chevron-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init();
+    </script>
+</body>
+</html>

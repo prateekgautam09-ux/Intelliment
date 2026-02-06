@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - IntelliMent</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000;
+            min-height: 100vh;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background-image: url('{{ url_for("static", filename="images/bg.jpg") }}');
+            background-size: cover;
+            background-position: center;
+            filter: blur(8px) brightness(35%);
+            transform: scale(1.1);
+            z-index: -1;
+        }
+
+        .header {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            padding: 15px 50px;
+            display: flex;
+            align-items: center;
+            background: rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+        .logo-img { width: 75px; height: 75px; border-radius: 10px; }
+        .logo-text {
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #fff, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .dashboard-container {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 32px;
+            padding: 50px 40px;
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.6);
+            position: relative;
+            z-index: 1;
+        }
+
+        .welcome-text { margin-bottom: 40px; }
+
+        h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(to right, #ffffff, #cbd5e1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .username {
+            font-size: 1.4rem;
+            color: #f59e0b;
+            font-weight: 700;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            margin-bottom: 30px;
+        }
+
+        .action-btn {
+            padding: 20px 30px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            font-size: 1.7rem;
+            font-weight: 700;
+            color: white;
+            text-decoration: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: 0.4s;
+        }
+
+        .action-btn:hover {
+            background: linear-gradient(145deg, #f59e0b, #ea580c);
+            transform: scale(1.03);
+        }
+
+        .logout-btn {
+            padding: 12px 35px;
+            border-radius: 50px;
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.3);
+            color: #ef4444;
+            font-weight: 700;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+
+<header class="header">
+    <a href="/" class="logo">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" class="logo-img">
+        <span class="logo-text">IntelliMent</span>
+    </a>
+</header>
+
+<div class="dashboard-container" data-aos="fade-up">
+    <div class="welcome-text">
+        <h2>Welcome Back,</h2>
+        <div class="username">{{ name }} 👋</div>
+    </div>
+
+    <div class="action-buttons">
+        <a href="/join_session" class="action-btn">🎯 IntelliViva</a>
+        <a href="/join_apti_session" class="action-btn">🧠 IntelliApti</a>
+        <a href="/mock_interview" class="action-btn">🤖 IntelliMock</a>
+        <a href="/student_apti_results" class="action-btn">📊 My Aptitude Results</a>
+    </div>
+
+    <a href="/logout" class="logout-btn">Logout</a>
+</div>
+
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>AOS.init();</script>
+
+</body>
+</html>

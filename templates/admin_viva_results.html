@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Viva Analytics - Admin Control</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        /* GLOBAL SCROLLBAR */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: #f59e0b; border-radius: 10px; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #020617;
+            color: white;
+            min-height: 100vh;
+            padding: 110px 30px 40px;
+        }
+
+        /* BACKGROUND */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('{{ url_for("static", filename="images/bg.jpg") }}');
+            background-size: cover;
+            background-position: center;
+            filter: blur(15px) brightness(15%);
+            z-index: -1;
+        }
+
+        /* 🟠 HEADER WITH LOGO */
+        .header {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            padding: 15px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+        .logo-img { width: 75px; height: 75px; border-radius: 8px; }
+        .logo-text {
+            font-size: 2.5rem; font-weight: 800;
+            background: linear-gradient(135deg, #fff, #f59e0b);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        /* CONTAINER */
+        .container { max-width: 1400px; margin: 0 auto; }
+
+        .page-title {
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .page-title h2 { font-size: 2rem; font-weight: 800; }
+        .page-title i { color: #f59e0b; }
+
+        /* TABLE CARD */
+        .table-wrapper {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            overflow-x: auto; /* Enable horizontal scroll for many columns */
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1200px; /* Ensures enough space for all metrics */
+        }
+
+        th {
+            background: rgba(245, 158, 11, 0.1);
+            padding: 20px 15px;
+            text-align: left;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #f59e0b;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        td {
+            padding: 18px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+            vertical-align: middle;
+        }
+
+        tr:hover td { background: rgba(255, 255, 255, 0.05); color: #fff; }
+
+        /* METRIC BADGES */
+        .metric {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            font-weight: 700;
+            color: #38bdf8;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+        }
+
+        .total-score {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #f59e0b;
+        }
+
+        /* FEEDBACK TOOLTIP-LIKE BOX */
+        .feedback-cell {
+            max-width: 250px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.5);
+            font-style: italic;
+        }
+
+        .feedback-cell:hover {
+            white-space: normal;
+            color: #fff;
+        }
+
+        /* BACK BUTTON */
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 30px;
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+            transition: 0.3s;
+            font-weight: 600;
+        }
+
+        .back-btn:hover { color: #f59e0b; transform: translateX(-5px); }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <a href="/admin_dashboard" class="logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo-img">
+            <span class="logo-text">IntelliMent Admin</span>
+        </a>
+        <div style="font-size: 0.8rem; color: #22c55e; font-weight: 700;">
+            <i class="fas fa-microchip"></i> AI EVALUATOR ACTIVE
+        </div>
+    </header>
+
+    <div class="container" data-aos="fade-up">
+        <div class="page-title">
+            <h2><i class="fas fa-microphone-alt"></i> IntelliViva Results</h2>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Course</th>
+                        <th>Domain</th>
+                        <th>Technical</th>
+                        <th>Clarity</th>
+                        <th>Comm.</th>
+                        <th>Conf.</th>
+                        <th>Total</th>
+                        <th>AI Feedback</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in results %}
+                    <tr>
+                        <td style="font-weight: 700; color: #fff;">{{ r.student_name }}</td>
+                        <td><span style="opacity: 0.6;">{{ r.course }}</span></td>
+                        <td><span style="color: #f59e0b; font-weight: 600;">{{ r.domain }}</span></td>
+                        <td><span class="metric">{{ r.technical }}</span></td>
+                        <td><span class="metric">{{ r.clarity }}</span></td>
+                        <td><span class="metric">{{ r.communication }}</span></td>
+                        <td><span class="metric">{{ r.confidence }}</span></td>
+                        <td class="total-score">{{ r.total }}</td>
+                        <td>
+                            <div class="feedback-cell" title="{{ r.feedback }}">
+                                {{ r.feedback }}
+                            </div>
+                        </td>
+                        <td style="font-size: 0.75rem; opacity: 0.4;">{{ r.submitted_at }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <a href="/admin_dashboard" class="back-btn">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init();
+    </script>
+</body>
+</html>

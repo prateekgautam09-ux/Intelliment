@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Mock Interview - IntelliMent</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000;
+            min-height: 100vh;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            padding: 80px 20px 40px;
+        }
+
+        /* CONSISTENT BACKGROUND */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('{{ url_for("static", filename="images/bg.jpg") }}');
+            background-size: cover;
+            background-position: center;
+            filter: blur(8px) brightness(35%);
+            z-index: -1;
+        }
+
+        /* HEADER LOGO */
+        .header {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            padding: 15px 50px;
+            display: flex;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+        .logo-img { width: 45px; height: 45px; border-radius: 10px; }
+        .logo-text {
+            font-size: 1.5rem; font-weight: 900;
+            background: linear-gradient(135deg, #fff, #f59e0b);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        /* MOCK CONTAINER */
+        .mock-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 32px;
+            padding: 50px 40px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
+            z-index: 1;
+        }
+
+        h2 {
+            font-size: 2.3rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            text-align: center;
+            background: linear-gradient(to right, #ffffff, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 40px;
+        }
+
+        /* FORM GROUPS */
+        .form-group {
+            position: relative;
+            margin-bottom: 25px;
+        }
+
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 18px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            font-size: 1rem;
+            color: #ffffff;
+            transition: 0.3s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: none;
+        }
+
+        .form-group select {
+            appearance: none;
+            cursor: pointer;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23f59e0b'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 20px center;
+            background-size: 20px;
+        }
+
+        .form-group select option { background: #111; color: #fff; }
+
+        .form-group label {
+            position: absolute;
+            left: 20px;
+            top: 18px;
+            color: rgba(255, 255, 255, 0.4);
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        /* Float effect */
+        .form-group textarea:focus + label,
+        .form-group textarea:not(:placeholder-shown) + label,
+        .form-group select:focus + label,
+        .form-group select:valid + label {
+            top: -12px;
+            left: 15px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: #fff;
+            background: #f59e0b;
+            padding: 4px 12px;
+            border-radius: 8px;
+        }
+
+        .form-group textarea:focus, .form-group select:focus {
+            outline: none;
+            border-color: #f59e0b;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* BUTTON */
+        .start-btn {
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(135deg, #f59e0b, #ea580c);
+            border: none;
+            border-radius: 18px;
+            color: white;
+            font-size: 1.15rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.4s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            text-transform: uppercase;
+            box-shadow: 0 10px 20px rgba(234, 88, 12, 0.3);
+            margin-top: 10px;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 40px rgba(234, 88, 12, 0.5);
+        }
+
+        .back-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 25px;
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: 0.3s;
+        }
+
+        .back-link:hover { color: #f59e0b; }
+
+        /* Background Glows */
+        .glow {
+            position: absolute;
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.1), transparent 70%);
+            border-radius: 50%;
+            z-index: 0;
+            filter: blur(80px);
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <a href="/" class="logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo-img">
+            <span class="logo-text">IntelliMent</span>
+        </a>
+    </header>
+
+    <div class="glow" style="top: -10%; left: -10%;"></div>
+    <div class="glow" style="bottom: -10%; right: -10%;"></div>
+
+    <div class="mock-container" data-aos="zoom-in">
+        <h2>🤖 AI Mock Interview</h2>
+        <p class="subtitle">Prepare yourself with our AI-driven interview session.</p>
+        
+        <form method="POST" action="/start_mock_interview">
+            <div class="form-group">
+                <textarea name="job_description" placeholder=" " required></textarea>
+                <label>Job Description / Skills</label>
+            </div>
+            
+            <div class="form-group">
+                <select name="domain" required>
+                    <option value="" disabled selected hidden></option>
+                    <option>Front End Developer</option>
+                    <option>Back End Developer</option>
+                    <option>Full Stack Developer</option>
+                    <option>Data Analyst</option>
+                    <option>Networking Expert</option>
+                    <option>SQL / PL</option>
+                    <option>Business Analyst</option>
+                    <option>Software Engineer</option>
+                    <option>C / C++</option>
+                    <option>Python / Java</option>
+                    <option>HR Round</option>
+                </select>
+                <label>Interview Domain</label>
+            </div>
+            
+            <div class="form-group">
+                <select name="course" required>
+                    <option value="" disabled selected hidden></option>
+                    <option>BCA / MCA</option>
+                    <option>B.Tech / M.Tech</option>
+                    <option>BBA / MBA</option>
+                    <option>B.Sc / M.Sc</option>
+                </select>
+                <label>Educational Course</label>
+            </div>
+            
+            <button type="submit" class="start-btn">
+                <span>Launch Interview</span>
+                <i class="fas fa-rocket"></i>
+            </button>
+        </form>
+        
+        <a href="/student_dashboard" class="back-link">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init();
+    </script>
+</body>
+</html>

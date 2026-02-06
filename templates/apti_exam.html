@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IntelliApti Live Exam - IntelliMent</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000;
+            color: white;
+            padding-top: 80px; /* Space for sticky timer */
+            min-height: 100vh;
+        }
+
+        /* CONSISTENT BACKGROUND */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('{{ url_for("static", filename="images/bg.jpg") }}');
+            background-size: cover;
+            background-position: center;
+            filter: blur(15px) brightness(20%);
+            z-index: -1;
+        }
+
+        /* STICKY EXAM HEADER */
+        .exam-header {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 70px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 40px;
+            z-index: 1000;
+        }
+
+        .timer-box {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            padding: 8px 20px;
+            border-radius: 50px;
+            color: #ef4444;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+        }
+
+        .exam-title {
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: #f59e0b;
+            letter-spacing: 1px;
+        }
+
+        /* MAIN LAYOUT */
+        .exam-container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px 100px;
+        }
+
+        /* QUESTION CARD */
+        .question-box {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 35px;
+            margin-bottom: 30px;
+            transition: 0.3s;
+        }
+
+        .question-box:hover {
+            border-color: rgba(245, 158, 11, 0.3);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            line-height: 1.6;
+            margin-bottom: 25px;
+            color: #fff;
+        }
+
+        /* CUSTOM RADIO OPTIONS */
+        .options-group {
+            display: grid;
+            gap: 15px;
+        }
+
+        .option-label {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 16px 20px;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .option-label:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .option-label input[type="radio"] {
+            margin-right: 15px;
+            accent-color: #f59e0b;
+            width: 18px;
+            height: 18px;
+        }
+
+        .option-label span {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Change style when checked */
+        .option-label input[type="radio"]:checked + span {
+            color: #f59e0b;
+            font-weight: 700;
+        }
+
+        .option-label:has(input:checked) {
+            border-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.05);
+        }
+
+        /* SUBMIT BAR */
+        .submit-footer {
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #f59e0b, #ea580c);
+            color: white;
+            border: none;
+            padding: 18px 60px;
+            border-radius: 16px;
+            font-size: 1.2rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 15px 30px rgba(234, 88, 12, 0.3);
+            text-transform: uppercase;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(234, 88, 12, 0.5);
+        }
+
+        /* WATERMARK */
+        .watermark {
+            position: fixed;
+            bottom: 20px;
+            right: 30px;
+            opacity: 0.2;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="exam-header">
+        <div class="exam-title">
+            <i class="fas fa-file-signature"></i> INTELLIAPTI: {{ course }} TEST
+        </div>
+        <div class="timer-box">
+            <i class="fas fa-stopwatch"></i>
+            <span id="timerDisplay">Time Left: --:--</span>
+        </div>
+    </div>
+
+    <div class="exam-container">
+        <form method="POST" action="/submit_apti" id="examForm">
+            
+            {% for q in questions %}
+            <div class="question-box">
+                <h3>
+                    <span style="color: #f59e0b; margin-right: 10px;">Q{{ loop.index }}.</span>
+                    {{ q.question }}
+                </h3>
+
+                <div class="options-group">
+                    <label class="option-label">
+                        <input type="radio" name="q{{ q.id }}" value="A">
+                        <span>{{ q.option_a }}</span>
+                    </label>
+
+                    <label class="option-label">
+                        <input type="radio" name="q{{ q.id }}" value="B">
+                        <span>{{ q.option_b }}</span>
+                    </label>
+
+                    <label class="option-label">
+                        <input type="radio" name="q{{ q.id }}" value="C">
+                        <span>{{ q.option_c }}</span>
+                    </label>
+
+                    <label class="option-label">
+                        <input type="radio" name="q{{ q.id }}" value="D">
+                        <span>{{ q.option_d }}</span>
+                    </label>
+                </div>
+            </div>
+            {% endfor %}
+
+            <div class="submit-footer">
+                <button type="submit" class="btn-submit">
+                    Finish & Submit Test <i class="fas fa-paper-plane" style="margin-left: 10px;"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="watermark">
+        <h2 style="font-weight: 900; letter-spacing: 5px;">INTELLIMENT AI</h2>
+    </div>
+
+    <script>
+    let timeRemaining = {{ duration|default(30) }} * 60;
+
+    const timerDisplay = document.getElementById('timerDisplay');
+
+    const countdown = setInterval(() => {
+        let minutes = Math.floor(timeRemaining / 60);
+        let seconds = timeRemaining % 60;
+
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        seconds = seconds < 10 ? '0' + seconds : seconds;
+
+        timerDisplay.innerText = `Time Left: ${minutes}:${seconds}`;
+
+        if (timeRemaining <= 0) {
+            clearInterval(countdown);
+            alert("⏰ Time is up! Test auto-submitted.");
+            document.getElementById('examForm').submit();
+        }
+
+        timeRemaining--;
+    }, 1000);
+</script>
+
+
+
+</body>
+</html>
