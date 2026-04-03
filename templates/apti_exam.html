@@ -3,262 +3,343 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IntelliApti Live Exam - IntelliMent</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>IntelliApti CBT Exam - Powered by IntelliMent</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Inter', sans-serif;
             background-color: #000;
-            color: white;
-            padding-top: 80px; /* Space for sticky timer */
-            min-height: 100vh;
+            color: #ffffff;
+            overflow: hidden; /* Screen fix */
+            position: relative;
+            height: 100vh;
         }
 
-        /* CONSISTENT BACKGROUND */
         body::before {
             content: "";
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             background-image: url('{{ url_for("static", filename="images/bg.jpg") }}');
             background-size: cover;
-            background-position: center;
-            filter: blur(15px) brightness(20%);
+            filter: blur(8px) brightness(30%);
             z-index: -1;
         }
 
-        /* STICKY EXAM HEADER */
-        .exam-header {
-            position: fixed;
-            top: 0; left: 0; right: 0;
+        /* --- TOPBAR --- */
+        .topbar {
             height: 70px;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(15px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0 50px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 40px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: fixed;
+            top: 0; left: 0; right: 0;
             z-index: 1000;
         }
 
-        .timer-box {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            padding: 8px 20px;
-            border-radius: 50px;
-            color: #ef4444;
-            font-weight: 800;
+        .topbar h3 {
+            font-weight: 900;
+            background: linear-gradient(135deg, #fff, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* --- MAIN LAYOUT --- */
+        .container {
             display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 1.1rem;
+            margin-top: 70px;
+            height: calc(100vh - 70px);
         }
 
-        .exam-title {
-            font-weight: 800;
-            font-size: 1.2rem;
-            color: #f59e0b;
-            letter-spacing: 1px;
-        }
-
-        /* MAIN LAYOUT */
-        .exam-container {
-            max-width: 900px;
-            margin: 40px auto;
-            padding: 0 20px 100px;
-        }
-
-        /* QUESTION CARD */
-        .question-box {
+        /* --- SIDEBAR (Palette + Buttons) --- */
+        .sidebar {
+            width: 300px;
             background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-            padding: 35px;
-            margin-bottom: 30px;
-            transition: 0.3s;
+            backdrop-filter: blur(15px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
         }
 
-        .question-box:hover {
-            border-color: rgba(245, 158, 11, 0.3);
-            background: rgba(255, 255, 255, 0.05);
+        .palette-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-bottom: 20px;
         }
 
-        h3 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            line-height: 1.6;
-            margin-bottom: 25px;
-            color: #fff;
-        }
-
-        /* CUSTOM RADIO OPTIONS */
-        .options-group {
+        .palette {
             display: grid;
-            gap: 15px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
         }
 
-        .option-label {
+        .q-btn {
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .answered { background: #f59e0b !important; color: #000; border-color: #f59e0b; }
+
+        /* --- BUTTONS AREA (Under Palette) --- */
+        .sidebar-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-group { display: flex; gap: 10px; }
+
+        button {
+            padding: 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700;
+            font-family: 'Inter';
+            transition: 0.3s;
+            border: none;
+        }
+
+        .submit-btn {
+            background: linear-gradient(145deg, #f59e0b, #d97706);
+            color: white;
+            width: 100%;
+        }
+
+        .prev-btn, .next-btn {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        button:hover { transform: translateY(-2px); filter: brightness(1.2); }
+
+        /* --- QUESTION AREA --- */
+        .main-content {
+            flex: 1;
+            padding: 50px;
+            overflow-y: auto;
+        }
+
+        .question-box {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .option {
             display: flex;
             align-items: center;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 16px 20px;
-            border-radius: 14px;
-            cursor: pointer;
-            transition: 0.2s;
-            border: 1px solid transparent;
-        }
-
-        .option-label:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .option-label input[type="radio"] {
-            margin-right: 15px;
-            accent-color: #f59e0b;
-            width: 18px;
-            height: 18px;
-        }
-
-        .option-label span {
-            font-size: 1rem;
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        /* Change style when checked */
-        .option-label input[type="radio"]:checked + span {
-            color: #f59e0b;
-            font-weight: 700;
-        }
-
-        .option-label:has(input:checked) {
-            border-color: #f59e0b;
-            background: rgba(245, 158, 11, 0.05);
-        }
-
-        /* SUBMIT BAR */
-        .submit-footer {
-            text-align: center;
-            padding: 40px 0;
-        }
-
-        .btn-submit {
-            background: linear-gradient(135deg, #f59e0b, #ea580c);
-            color: white;
-            border: none;
-            padding: 18px 60px;
-            border-radius: 16px;
-            font-size: 1.2rem;
-            font-weight: 800;
+            padding: 18px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            margin-bottom: 15px;
             cursor: pointer;
             transition: 0.3s;
-            box-shadow: 0 15px 30px rgba(234, 88, 12, 0.3);
-            text-transform: uppercase;
         }
 
-        .btn-submit:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(234, 88, 12, 0.5);
-        }
+        .option:hover { border-color: #f59e0b; background: rgba(245, 158, 11, 0.05); }
+        
+        .option input { margin-right: 15px; accent-color: #f59e0b; }
 
-        /* WATERMARK */
-        .watermark {
-            position: fixed;
-            bottom: 20px;
-            right: 30px;
-            opacity: 0.2;
-            pointer-events: none;
+        /* --- OVERLAY --- */
+        #fullscreen-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.98); display: none;
+            justify-content: center; align-items: center; z-index: 10000;
         }
     </style>
 </head>
 <body>
 
-    <div class="exam-header">
-        <div class="exam-title">
-            <i class="fas fa-file-signature"></i> INTELLIAPTI: {{ course }} TEST
+<div class="topbar">
+    <h3>INTELLIAPTI</h3>
+    <div style="background: rgba(255,255,255,0.05); padding: 8px 20px; border-radius: 50px; border: 1px solid rgba(255,255,255,0.1);">
+        <i class="fas fa-user" style="color:#f59e0b"></i> {{ student_name }}
+    </div>
+    <div id="timer" style="font-weight: 800; color: #f59e0b; font-size: 1.2rem;">Time Left: --:--</div>
+</div>
+
+<div class="container">
+    <div class="sidebar">
+        <div class="palette-container">
+            <h4 style="margin-bottom: 15px; opacity: 0.7;">Question Palette</h4>
+            <div class="palette" id="palette"></div>
         </div>
-        <div class="timer-box">
-            <i class="fas fa-stopwatch"></i>
-            <span id="timerDisplay">Time Left: --:--</span>
+
+        <div class="sidebar-controls" data-aos="fade-up">
+            <div class="nav-group">
+                <button class="prev-btn" onclick="prevQuestion()"><i class="fas fa-arrow-left"></i></button>
+                <button class="next-btn" onclick="nextQuestion()">Next <i class="fas fa-arrow-right"></i></button>
+            </div>
+            <button class="submit-btn" onclick="submitExam()">
+                <i class="fas fa-check-circle"></i> SUBMIT EXAM
+            </button>
         </div>
     </div>
 
-    <div class="exam-container">
-        <form method="POST" action="/submit_apti" id="examForm">
-            
-            {% for q in questions %}
-            <div class="question-box">
-                <h3>
-                    <span style="color: #f59e0b; margin-right: 10px;">Q{{ loop.index }}.</span>
-                    {{ q.question }}
-                </h3>
-
-                <div class="options-group">
-                    <label class="option-label">
-                        <input type="radio" name="q{{ q.id }}" value="A">
-                        <span>{{ q.option_a }}</span>
-                    </label>
-
-                    <label class="option-label">
-                        <input type="radio" name="q{{ q.id }}" value="B">
-                        <span>{{ q.option_b }}</span>
-                    </label>
-
-                    <label class="option-label">
-                        <input type="radio" name="q{{ q.id }}" value="C">
-                        <span>{{ q.option_c }}</span>
-                    </label>
-
-                    <label class="option-label">
-                        <input type="radio" name="q{{ q.id }}" value="D">
-                        <span>{{ q.option_d }}</span>
-                    </label>
-                </div>
-            </div>
-            {% endfor %}
-
-            <div class="submit-footer">
-                <button type="submit" class="btn-submit">
-                    Finish & Submit Test <i class="fas fa-paper-plane" style="margin-left: 10px;"></i>
-                </button>
-            </div>
-        </form>
+    <div class="main-content">
+        <div class="question-box" data-aos="fade-left">
+            <h2 id="question">Loading Question...</h2>
+        </div>
+        <div id="options" data-aos="fade-left" data-aos-delay="100"></div>
     </div>
+</div>
 
-    <div class="watermark">
-        <h2 style="font-weight: 900; letter-spacing: 5px;">INTELLIMENT AI</h2>
+<div id="fullscreen-overlay">
+    <div style="text-align:center; border: 1px solid #f59e0b; padding: 40px; border-radius: 20px;">
+        <h2 style="color: #f87171;">⚠ TAB SWITCH DETECTED</h2>
+        <p style="margin: 20px 0; color: #ccc;">Please return to Fullscreen to continue.</p>
+        <button onclick="resumeExam()" class="submit-btn" style="width: auto; padding: 12px 40px;">Resume</button>
     </div>
+</div>
 
-    <script>
-    let timeRemaining = {{ duration|default(30) }} * 60;
+<form id="examForm" method="POST" action="/submit_apti"></form>
 
-    const timerDisplay = document.getElementById('timerDisplay');
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+    AOS.init();
 
-    const countdown = setInterval(() => {
-        let minutes = Math.floor(timeRemaining / 60);
-        let seconds = timeRemaining % 60;
+    // ✅ FIXED (IMPORTANT)
+    let questions = JSON.parse('{{ questions | tojson | safe }}');
 
-        minutes = minutes < 10 ? '0' + minutes : minutes;
-        seconds = seconds < 10 ? '0' + seconds : seconds;
+    let currentQ = 0;
+    let answers = {};
+    let violationCount = 0;
+    const MAX_VIOLATIONS = 3;
+    let examStarted = false;
 
-        timerDisplay.innerText = `Time Left: ${minutes}:${seconds}`;
-
-        if (timeRemaining <= 0) {
-            clearInterval(countdown);
-            alert("⏰ Time is up! Test auto-submitted.");
-            document.getElementById('examForm').submit();
+    function loadQuestion(index) {
+        if(!questions || questions.length === 0){
+            document.getElementById("question").innerText = "No Questions Found!";
+            return;
         }
 
-        timeRemaining--;
+        let q = questions[index];
+        document.getElementById("question").innerText = `Q${index+1}. ${q.question}`;
+        let html = `
+            <label class="option"><input type="radio" name="q" value="A"> ${q.option_a}</label>
+            <label class="option"><input type="radio" name="q" value="B"> ${q.option_b}</label>
+            <label class="option"><input type="radio" name="q" value="C"> ${q.option_c}</label>
+            <label class="option"><input type="radio" name="q" value="D"> ${q.option_d}</label>
+        `;
+        document.getElementById("options").innerHTML = html;
+
+        if (answers[q.id]) {
+            document.querySelector(`input[value="${answers[q.id]}"]`).checked = true;
+        }
+    }
+
+    function saveAnswer() {
+        let selected = document.querySelector('input[name="q"]:checked');
+        if (selected) {
+            answers[questions[currentQ].id] = selected.value;
+            let btns = document.querySelectorAll(".q-btn");
+            btns[currentQ].classList.add("answered");
+        }
+    }
+
+    function nextQuestion() { saveAnswer(); if (currentQ < questions.length - 1) { currentQ++; loadQuestion(currentQ); } }
+    function prevQuestion() { if (currentQ > 0) { currentQ--; loadQuestion(currentQ); } }
+
+    // Palette Init
+    const pal = document.getElementById("palette");
+    questions.forEach((q, i) => {
+        let b = document.createElement("button");
+        b.innerText = i + 1;
+        b.className = "q-btn";
+        b.onclick = () => { currentQ = i; loadQuestion(i); };
+        pal.appendChild(b);
+    });
+
+    function submitExam() {
+        if(confirm("Submit Exam?")) {
+            saveAnswer();
+            let form = document.getElementById("examForm");
+            for(let id in answers) {
+                let inp = document.createElement("input");
+                inp.type="hidden"; inp.name="q"+id; inp.value=answers[id];
+                form.appendChild(inp);
+            }
+            form.submit();
+        }
+    }
+
+    // ✅ FULLSCREEN FUNCTION FIX
+    function resumeExam() {
+        let elem = document.documentElement;
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+        }
+        document.getElementById("fullscreen-overlay").style.display = "none";
+    }
+
+    // ✅ MAIN FIX (TAB SWITCH + RETURN DETECTION)
+    document.addEventListener("visibilitychange", () => {
+
+        if(document.hidden && examStarted) {
+            violationCount++;
+
+            alert("Violation " + violationCount + "/" + MAX_VIOLATIONS);
+            document.getElementById("fullscreen-overlay").style.display = "flex";
+
+            if(violationCount >= MAX_VIOLATIONS) {
+                window.location.href="/student_dashboard";
+            }
+        }
+
+        else if(!document.hidden && examStarted) {
+            // 👇 IMPORTANT FIX
+            if(!document.fullscreenElement){
+                document.getElementById("fullscreen-overlay").style.display = "flex";
+            }
+        }
+    });
+
+    // ✅ FORCE FULLSCREEN (NEW)
+    setInterval(() => {
+        if (examStarted && !document.fullscreenElement) {
+            document.getElementById("fullscreen-overlay").style.display = "flex";
+        }
     }, 1000);
-</script>
 
+    // Start fullscreen on first click
+    document.addEventListener("click", () => { 
+        if(!examStarted) { 
+            document.documentElement.requestFullscreen(); 
+            examStarted = true; 
+        }
+    }, {once: true});
 
+    // Timer
+    let time = 1800; 
+    setInterval(() => {
+        let m = Math.floor(time/60); let s = time%60;
+        document.getElementById("timer").innerText = `Time Left: ${m}:${s<10?'0'+s:s}`;
+        if(time <= 0) submitExam();
+        time--;
+    }, 1000);
 
-</body>
+    window.onload = () => loadQuestion(0);
+</script></body>
 </html>

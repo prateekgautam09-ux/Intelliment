@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Error {{ error_code }}</title>
+    <style>
+        body {
+            background: #000;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+        }
+
+        .box {
+            background: rgba(255,255,255,0.05);
+            padding: 40px;
+            border-radius: 20px;
+            backdrop-filter: blur(20px);
+        }
+
+        h1 {
+            font-size: 4rem;
+            color: #f59e0b;
+        }
+
+        p {
+            margin-top: 10px;
+            opacity: 0.8;
+        }
+
+        a {
+            margin-top: 20px;
+            display: inline-block;
+            padding: 10px 20px;
+            background: #f59e0b;
+            color: black;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+
+<div class="box">
+    <h1>{{ error_code }}</h1>
+    <p>{{ message }}</p>
+    <a href="/">Go Home</a>
+</div>
+
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Join IntelliMent - Create Account</title>
+    <title>Evenzaa - Create Account</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -58,9 +58,9 @@
         }
 
         .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
-        .logo-img { width: 42px; height: 42px; border-radius: 10px; }
+        .logo-img { width: 75px; height: 75px; border-radius: 10px; }
         .logo-text {
-            font-size: 1.4rem; font-weight: 900;
+            font-size: 2.5rem; font-weight: 900;
             background: linear-gradient(135deg, #fff, #f59e0b);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
@@ -125,6 +125,12 @@
         .form-group select {
             appearance: none;
             cursor: pointer;
+        }
+
+        /* SELECT OPTIONS STYLING (BLACK BACKGROUND) */
+        .form-group select option {
+            background-color: #121212; /* Dark/Black Background */
+            color: #ffffff;           /* White Text */
         }
 
         .form-group input:focus, .form-group select:focus {
@@ -198,15 +204,23 @@
 
     <header class="header">
         <a href="/" class="logo">
-            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo-img">
-            <span class="logo-text">IntelliMent</span>
+            <img src="{{ url_for('static', filename='images/11.png') }}" alt="Logo" class="logo-img">
+            <span class="logo-text">Evenzaa</span>
         </a>
     </header>
 
     <div class="register-box" data-aos="fade-up">
         <h2>Create Account</h2>
-        <p class="subtitle">Start your AI-powered learning journey</p>
+        <p class="subtitle">Start your journey with us</p>
         
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            <div style="background: rgba(245,158,11,0.1); border: 1px solid #f59e0b; padding: 12px; border-radius: 10px; margin-bottom: 20px; text-align:center; font-weight:600;">
+                {{ messages[0] }}
+            </div>
+            {% endif %}
+        {% endwith %}
+
         <form method="POST">
             <div class="form-group">
                 <i class="fas fa-user"></i>
@@ -225,17 +239,7 @@
                 <input type="password" name="password" placeholder=" " required>
                 <label>Password</label>
             </div>
-            
-            <div class="form-group">
-                <i class="fas fa-user-tag"></i>
-                <select name="account_type" required>
-                    <option value="" disabled selected hidden></option>
-                    <option value="student">Student</option>
-                    <option value="admin">Admin</option>
-                </select>
-                <label>Account Type</label>
-            </div>
-            
+           
             <button type="submit" class="register-btn">Register Now</button>
         </form>
         

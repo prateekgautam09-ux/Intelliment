@@ -39,13 +39,14 @@
             z-index: -1;
         }
 
-        /* HEADER LOGO */
+        /* HEADER LOGO & TYPEWRITER */
         .header {
             position: fixed;
             top: 0; left: 0; right: 0;
             z-index: 1000;
             padding: 15px 50px;
             display: flex;
+            justify-content: space-between; /* Space for typewriter on right */
             align-items: center;
             background: rgba(0, 0, 0, 0.2);
             backdrop-filter: blur(10px);
@@ -59,6 +60,21 @@
             background: linear-gradient(135deg, #fff, #f59e0b);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
+
+        /* TYPEWRITER STYLE */
+        .header-typewriter {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #f59e0b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px 20px;
+            border-radius: 12px;
+            border-right: 3px solid #f59e0b;
+        }
+
+        #header-typed { color: #fff; }
 
         /* LOGIN CONTAINER */
         .login-box {
@@ -125,7 +141,6 @@
             box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
         }
 
-        /* Floating Label Logic */
         .form-group label {
             position: absolute;
             left: 50px;
@@ -186,7 +201,6 @@
 
         .back-link:hover { color: #f59e0b; }
 
-        /* Ambient Glows */
         .ambient-glow {
             position: absolute;
             width: 500px; height: 500px;
@@ -204,6 +218,10 @@
             <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo-img">
             <span class="logo-text">IntelliMent</span>
         </a>
+
+        <div class="header-typewriter" data-aos="fade-left">
+            ADMIN: <span id="header-typed"></span>
+        </div>
     </header>
 
     <div class="ambient-glow" style="top: -10%; right: -5%;"></div>
@@ -244,8 +262,23 @@
     </div>
 
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12"></script>
     <script>
         AOS.init();
+
+        // Admin Header Typewriter
+        var typed = new Typed('#header-typed', {
+            strings: ['Aptitude', 'Verbal Ability', 'Reasoning', 'Interview'],
+            typeSpeed: 80,
+            backSpeed: 80,
+            backDelay: 2000,
+            loop: true,
+            showCursor: true,
+            cursorChar: '_'
+        });
     </script>
+
+    {% include "intellibot.html" %}
+
 </body>
 </html>

@@ -3,6 +3,10 @@ import mysql.connector
 import os
 from groq import Groq
 import json
+from flask_mail import Mail, Message
+import random
+import time
+
 
 # ===============================
 # FLASK SETUP
@@ -11,26 +15,35 @@ app = Flask(__name__)
 app.secret_key = "secret123"
 
 # ===============================
+# MAIL CONFIG (OTP SYSTEM)
+# ===============================
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 465
+app.config['MAIL_USE_SSL'] = True
+app.config['MAIL_USE_TLS'] = False
+app.config['MAIL_USERNAME'] = 'intelliment1@gmail.com'
+app.config['MAIL_PASSWORD'] = 'uroqrgckcfgdgruo'
+app.config['MAIL_DEFAULT_SENDER'] = 'intelliment1@gmail.com'
+
+mail = Mail(app)
+
+
+# ===============================
 # AI CLIENT
 # ===============================
 groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 # ===============================
+# OTP GENERATOR
+# ===============================
+def generate_otp():
+    return str(random.randint(100000, 999999))
+
+
+# ===============================
 # DATABASE
 # ===============================
-def get_db_connection():
-    try:
-        return mysql.connector.connect(
-            host=os.getenv("DB_HOST"),
-            user=os.getenv("DB_USER"),
-            password=os.getenv("DB_PASS"),
-            database=os.getenv("DB_NAME"),
-            port=int(os.getenv("DB_PORT", 3306))
-        )
-    except Exception as e:
-        print("DB Error:", e)
-        return None
-
+db = mysql.connector.connect( host="localhost", user="root", password="", database="ai_viva_examiner" )
 # ===============================
 # AI – VIVA QUESTION
 # ===============================
@@ -49,6 +62,7 @@ Only question. No explanation.
 # ===============================
 # AI – APTI MCQs
 # ===============================
+
 def generate_apti_mcqs(session_id, difficulty, quant, reasoning, verbal):
 
     sections = {
@@ -60,13 +74,22 @@ def generate_apti_mcqs(session_id, difficulty, quant, reasoning, verbal):
     cur = db.cursor()
 
     for section, count in sections.items():
+
         if count == 0:
             continue
 
         prompt = f"""
-Generate EXACTLY {count} {difficulty} {section} MCQs.
+You are a professional exam question generator.
 
-Return ONLY JSON:
+STRICT RULES:
+1. Generate EXACTLY {count} questions.
+2. Difficulty must be strictly {difficulty}.
+3. Questions must belong ONLY to {section}.
+4. Do NOT generate more or fewer than {count}.
+5. Do NOT include explanations.
+6. Return ONLY valid JSON array.
+
+JSON format:
 [
   {{
     "question": "text",
@@ -80,17 +103,31 @@ Return ONLY JSON:
   }}
 ]
 """
+
         response = groq_client.chat.completions.create(
             model="llama-3.1-8b-instant",
+            temperature=0.2,
             messages=[{"role": "user", "content": prompt}]
         )
 
         raw = response.choices[0].message.content.strip()
+
+        # 🔥 Extract only JSON
         start = raw.find("[")
         end = raw.rfind("]") + 1
-        mcqs = json.loads(raw[start:end])
+        raw_json = raw[start:end]
+
+        try:
+            mcqs = json.loads(raw_json)
+        except Exception as e:
+            print("JSON Parse Error:", e)
+            continue
+
+        # 🔥 Force exact count
+        mcqs = mcqs[:count]
 
         for mcq in mcqs:
+
             cur.execute("""
                 INSERT INTO apti_questions
                 (session_id, section, question,
@@ -124,44 +161,197 @@ def register():
         name = request.form["name"]
         email = request.form["email"]
         password = request.form["password"]
-        account_type = request.form["account_type"]  # student / admin
+        account_type = request.form["account_type"]
 
-        cur = db.cursor(buffered=True)
-
-        cur.execute("""
-            INSERT INTO users (name, email, password, account_type)
-            VALUES (%s, %s, %s, %s)
-        """, (name, email, password, account_type))
-
-        db.commit()
+        cur = db.cursor()
+        cur.execute("SELECT * FROM users WHERE email=%s", (email,))
+        existing = cur.fetchone()
         cur.close()
 
-        flash("✅ Registration successful. Please login.")
-        return redirect("/student_login")
+        # 🔴 DUPLICATE EMAIL CHECK
+        if existing:
+            flash("⚠ Email already registered. Please login.")
+            return redirect("/register")
+
+        hashed_password = password
+
+        otp = generate_otp()
+
+        session["temp_user"] = {
+            "name": name,
+            "email": email,
+            "password": hashed_password,
+            "account_type": account_type
+        }
+
+        session["otp"] = otp
+        session["otp_time"] = time.time()   # ⏳ expiry timer start
+
+        try:
+            msg = Message(
+                "Your IntelliMent OTP Code",
+                recipients=[email]
+            )
+            msg.body = f"""
+Hello {name},
+
+Your IntelliMent Registration OTP is:
+
+{otp}
+
+This OTP is valid for 5 minutes.
+"""
+            mail.send(msg)
+
+            flash("📩 OTP sent to your email.")
+            return redirect("/verify_otp")
+
+        except Exception as e:
+            print("Mail Error:", e)
+            flash("⚠ Unable to send OTP.")
+            return redirect("/register")
 
     return render_template("register.html")
+# ===============================
+# VERIFY OTP
+# ===============================
+@app.route("/verify_otp", methods=["GET", "POST"])
+def verify_otp():
+
+    if request.method == "POST":
+
+        user_otp = request.form.get("otp")
+
+        saved_otp = session.get("otp")
+        otp_time = session.get("otp_time")
+        temp_user = session.get("temp_user")
+
+        # ❌ Session missing
+        if not saved_otp or not otp_time or not temp_user:
+            flash("⚠ Session expired. Please register again.")
+            return redirect("/register")
+
+        # ⏳ OTP Expiry (5 minutes = 300 sec)
+        if time.time() - otp_time > 300:
+            session.pop("otp", None)
+            session.pop("temp_user", None)
+            session.pop("otp_time", None)
+
+            flash("⏳ OTP expired. Please register again.")
+            return redirect("/register")
+
+        # ❌ Wrong OTP
+        if user_otp != saved_otp:
+            flash("❌ Invalid OTP. Try again.")
+            return redirect("/verify_otp")
+
+        # ✅ Correct OTP → Save user (PLAIN PASSWORD)
+        try:
+            cur = db.cursor()
+            cur.execute("""
+                INSERT INTO users (name, email, password, account_type)
+                VALUES (%s, %s, %s, %s)
+            """, (
+                temp_user["name"],
+                temp_user["email"],
+                temp_user["password"],   # plain password save hoga
+                temp_user["account_type"]
+            ))
+            db.commit()
+            cur.close()
+
+        except Exception as e:
+            print("Database Error:", e)
+            flash("⚠ Something went wrong. Try again.")
+            return redirect("/register")
+
+        # 🔥 Clear session
+        session.pop("otp", None)
+        session.pop("temp_user", None)
+        session.pop("otp_time", None)
+
+        flash("🎉 Registration Successful! Please login.")
+        return redirect("/student_login")
+
+    return render_template("verify_otp.html")
+@app.route("/resend_otp")
+def resend_otp():
+
+    temp_user = session.get("temp_user")
+
+    if not temp_user:
+        flash("⚠ Session expired. Register again.")
+        return redirect("/register")
+
+    new_otp = generate_otp()
+
+    session["otp"] = new_otp
+    session["otp_time"] = time.time()
+
+    try:
+        msg = Message(
+            "Your New IntelliMent OTP Code",
+            recipients=[temp_user["email"]]
+        )
+        msg.body = f"""
+Hello {temp_user["name"]},
+
+Your new OTP is:
+
+{new_otp}
+
+Valid for 5 minutes.
+"""
+        mail.send(msg)
+
+        flash("🔁 New OTP sent to your email.")
+        return redirect("/verify_otp")
+
+    except Exception as e:
+        print("Resend OTP Error:", e)
+        flash("⚠ Could not resend OTP.")
+        return redirect("/verify_otp")
 
 # ===============================
 # ADMIN LOGIN
 # ===============================
 @app.route("/admin_login", methods=["GET", "POST"])
 def admin_login():
+
     if request.method == "POST":
-        cur = db.cursor(buffered=True)   # ✅ FIX
+
+        email = request.form["email"]
+        password = request.form["password"]
+
+        print("Entered Email:", email)
+        print("Entered Password:", password)
+
+        cur = db.cursor(dictionary=True)
         cur.execute(
-            "SELECT * FROM users WHERE email=%s AND password=%s AND account_type='admin'",
-            (request.form["email"], request.form["password"])
+            "SELECT * FROM users WHERE email=%s AND account_type='admin'",
+            (email,)
         )
         admin = cur.fetchone()
         cur.close()
 
-        if admin:
-            session["admin_name"] = admin[1]
-            return redirect("/admin_dashboard")
+        print("DB Result:", admin)
 
-        flash("Invalid Admin Credentials")
+        if admin:
+            print("Stored Password:", admin["password"])
+            print("Password Check:", admin["password"] == password)
+
+            if admin["password"] == password:
+                session["admin_name"] = admin["name"]
+                session["email"] = admin["email"]
+                session["role"] = "admin"
+                return redirect("/admin_dashboard")
+            else:
+                flash("Wrong Password")
+        else:
+            flash("Admin not found")
 
     return render_template("admin_login.html")
+
 @app.route("/admin_dashboard")
 def admin_dashboard():
     if "admin_name" not in session:
@@ -235,9 +425,14 @@ def intelliapti():
 
 @app.route("/create_apti_session", methods=["POST"])
 def create_apti_session():
-    data = request.form
 
+    data = request.form
     cur = db.cursor()
+
+    # 🔥 STEP 2 FIX — REMOVE OLD QUESTIONS OF SAME SESSION
+    cur.execute("DELETE FROM apti_questions WHERE session_id=%s", (data["session_id"],))
+
+    # Insert new session
     cur.execute("""
         INSERT INTO apti_sessions
         (session_id, session_password, course, difficulty,
@@ -253,9 +448,11 @@ def create_apti_session():
         data["verbal_questions"],
         data["duration"]
     ))
+
     db.commit()
     cur.close()
 
+    # Generate new questions
     generate_apti_mcqs(
         data["session_id"],
         data["difficulty"],
@@ -272,28 +469,73 @@ def create_apti_session():
 # ===============================
 @app.route("/student_login", methods=["GET", "POST"])
 def student_login():
+
     if request.method == "POST":
-        cur = db.cursor()
-        cur.execute(
-            "SELECT * FROM users WHERE email=%s AND password=%s AND account_type='student'",
-            (request.form["email"], request.form["password"])
-        )
-        student = cur.fetchone()
+
+        email = request.form["email"]
+        password = request.form["password"]
+
+        cur = db.cursor(dictionary=True)
+        cur.execute("SELECT * FROM users WHERE email=%s AND account_type='student'", (email,))
+        user = cur.fetchone()
         cur.close()
 
-        if student:
-            session["student_name"] = student[1]
-            return redirect("/student_dashboard")
-
-        flash("Invalid Student Credentials")
+        if user:
+            if user["password"] == password:
+                session["student_name"] = user["name"]
+                session["email"] = user["email"]
+                session["role"] = "student"
+                return redirect("/student_dashboard")
+            else:
+                flash("❌ Wrong Password")
+        else:
+            flash("❌ User not found")
 
     return render_template("student_login.html")
-
 @app.route("/student_dashboard")
 def student_dashboard():
+
     if "student_name" not in session:
         return redirect("/student_login")
-    return render_template("student_dashboard.html", name=session["student_name"])
+
+    name = session["student_name"]
+
+    cur = db.cursor(dictionary=True)
+
+    # 🔹 Total Tests
+    cur.execute("""
+        SELECT COUNT(*) as total_tests
+        FROM apti_results
+        WHERE student_name = %s
+    """, (name,))
+    total_tests = cur.fetchone()["total_tests"]
+
+    # 🔹 Best Score
+    cur.execute("""
+        SELECT MAX(score) as best_score
+        FROM apti_results
+        WHERE student_name = %s
+    """, (name,))
+    best_score = cur.fetchone()["best_score"] or 0
+
+    # 🔹 Average Score
+    cur.execute("""
+        SELECT AVG(score) as avg_score
+        FROM apti_results
+        WHERE student_name = %s
+    """, (name,))
+    avg_score = cur.fetchone()["avg_score"]
+    avg_score = round(avg_score, 2) if avg_score else 0
+
+    cur.close()
+
+    return render_template(
+        "student_dashboard.html",
+        name=name,
+        total_tests=total_tests,
+        best_score=best_score,
+        avg_score=avg_score
+    )
 
 # ===============================
 # JOIN VIVA
@@ -382,14 +624,16 @@ def submit_answer():
     domain = session.get("mock_domain", "General")
     course = session.get("mock_course", "General")
 
-    # 🚫 EMPTY ANSWER CHECK
-    if not answer or answer.strip() == "":
-        technical = clarity = communication = confidence = total = 0
-        feedback = "No answer was provided. Please attempt the question seriously."
+    try:
 
-    else:
-        # 🧠 AI EVALUATION
-        prompt = f"""
+        # 🚫 EMPTY ANSWER CHECK
+        if not answer or answer.strip() == "":
+            technical = clarity = communication = confidence = total = 0
+            feedback = "No answer was provided. Please attempt the question seriously."
+
+        else:
+            # 🧠 AI EVALUATION
+            prompt = f"""
 You are a strict professional interview evaluator.
 
 Question:
@@ -416,45 +660,61 @@ Return ONLY valid JSON:
 }}
 """
 
-        response = groq_client.chat.completions.create(
-            model="llama-3.1-8b-instant",
-            messages=[{"role": "user", "content": prompt}]
-        )
+            response = groq_client.chat.completions.create(
+                model="llama-3.1-8b-instant",
+                messages=[{"role": "user", "content": prompt}]
+            )
 
-        raw = response.choices[0].message.content.strip()
-        start = raw.find("{")
-        end = raw.rfind("}") + 1
-        analysis = json.loads(raw[start:end])
+            raw = response.choices[0].message.content.strip()
 
-        technical = analysis["technical"]
-        clarity = analysis["clarity"]
-        communication = analysis["communication"]
-        confidence = analysis["confidence"]
-        feedback = analysis["feedback"]
+            # 🛡 JSON Safe Parsing
+            start = raw.find("{")
+            end = raw.rfind("}") + 1
 
-        total = technical + clarity + communication + confidence
+            if start == -1 or end == -1:
+                raise ValueError("Invalid JSON from AI")
+
+            analysis = json.loads(raw[start:end])
+
+            technical = analysis.get("technical", 0)
+            clarity = analysis.get("clarity", 0)
+            communication = analysis.get("communication", 0)
+            confidence = analysis.get("confidence", 0)
+            feedback = analysis.get("feedback", "No feedback generated.")
+
+            total = technical + clarity + communication + confidence
+
+    except Exception as e:
+        print("⚠️ AI Evaluation Error:", e)
+
+        # Safe fallback values
+        technical = clarity = communication = confidence = total = 0
+        feedback = "⚠️ AI Evaluation temporarily unavailable. Please try again later."
 
     # ✅ SAVE INTELLIVIVA RESULT FOR ADMIN
-    cur = db.cursor()
-    cur.execute("""
-        INSERT INTO viva_results
-        (student_name, course, domain,
-         technical, clarity, communication, confidence,
-         total, feedback)
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
-    """, (
-        session["student_name"],
-        course,
-        domain,
-        technical,
-        clarity,
-        communication,
-        confidence,
-        total,
-        feedback
-    ))
-    db.commit()
-    cur.close()
+    try:
+        cur = db.cursor()
+        cur.execute("""
+            INSERT INTO viva_results
+            (student_name, course, domain,
+             technical, clarity, communication, confidence,
+             total, feedback)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        """, (
+            session["student_name"],
+            course,
+            domain,
+            technical,
+            clarity,
+            communication,
+            confidence,
+            total,
+            feedback
+        ))
+        db.commit()
+        cur.close()
+    except Exception as db_error:
+        print("⚠️ Database Save Error:", db_error)
 
     # 🎯 SHOW SCORECARD
     return render_template(
@@ -496,19 +756,35 @@ def apti_exam():
     if "apti_session_id" not in session:
         return redirect("/student_dashboard")
 
-    cur = db.cursor(dictionary=True, buffered=True)  # ✅ FIX
+    cur = db.cursor(dictionary=True)
 
     cur.execute("""
         SELECT id, section, question,
                option_a, option_b, option_c, option_d
         FROM apti_questions
         WHERE session_id=%s
+        ORDER BY section
     """, (session["apti_session_id"],))
 
     questions = cur.fetchall()
     cur.close()
 
-    return render_template("apti_exam.html", questions=questions)
+    # 🔥 Section wise grouping
+    grouped_questions = {
+        "Quantitative Aptitude": [],
+        "Reasoning": [],
+        "Verbal Ability": []
+    }
+
+    for q in questions:
+        grouped_questions[q["section"]].append(q)
+
+    return render_template(
+    "apti_exam.html",
+    questions=questions,
+    student_name=session.get("student_name"),
+    session_id=session.get("apti_session_id")
+)
 
 @app.route("/start_mock_interview", methods=["POST"])
 def start_mock_interview():
@@ -636,16 +912,97 @@ def submit_apti():
     db.commit()
     cur.close()
 
-    return f"""
-    <h2>✅ Test Submitted Successfully</h2>
-    <p>Total Score: {score} / {total}</p>
-    <p>Quant: {quant_score}</p>
-    <p>Reasoning: {reasoning_score}</p>
-    <p>Verbal: {verbal_score}</p>
-    <a href="/student_dashboard">Back to Dashboard</a>
-    """
+    return render_template(
+    "apti_result.html",
+    score=score,
+    total=total,
+    quant_score=quant_score,
+    reasoning_score=reasoning_score,
+    verbal_score=verbal_score
+)
+
+# ===============================
+# GLOBAL ERROR HANDLERS
+# ===============================
+
+@app.errorhandler(404)
+def not_found_error(error):
+    return render_template("error.html",
+                           error_code=404,
+                           message="Page Not Found"), 404
 
 
+@app.errorhandler(500)
+def internal_error(error):
+    db.rollback()
+    return render_template("error.html",
+                           error_code=500,
+                           message="Something went wrong. Please try again."), 500
+
+
+@app.route("/intellibot", methods=["POST"])
+def intellibot():
+    try:
+        data = request.get_json()
+        user_msg = data.get("message")
+        role = data.get("role", "guest")
+
+        user_email = session.get("email", "guest")
+        name = session.get("name", "User")
+
+        cur = db.cursor()
+
+        # Fetch history
+        cur.execute("""
+        SELECT sender, message FROM chatbot_logs
+        WHERE user_email = %s
+        ORDER BY id DESC LIMIT 5
+        """, (user_email,))
+        history = cur.fetchall()
+
+        system_prompt = f"""
+        You are Intellibot.
+        User name: {name}
+        User role: {role}
+        Be helpful and context-aware.
+        """
+
+        messages = [{"role": "system", "content": system_prompt}]
+
+        for sender, msg in reversed(history):
+            messages.append({
+                "role": "assistant" if sender == "bot" else "user",
+                "content": msg
+            })
+
+        messages.append({"role": "user", "content": user_msg})
+
+        response = groq_client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=messages
+        )
+
+        bot_reply = response.choices[0].message.content.strip()
+
+        # Save messages
+        cur.execute("""
+        INSERT INTO chatbot_logs (user_email, role, message, sender)
+        VALUES (%s, %s, %s, %s)
+        """, (user_email, role, user_msg, "user"))
+
+        cur.execute("""
+        INSERT INTO chatbot_logs (user_email, role, message, sender)
+        VALUES (%s, %s, %s, %s)
+        """, (user_email, role, bot_reply, "bot"))
+
+        db.commit()
+        cur.close()
+
+        return {"reply": bot_reply}
+
+    except Exception as e:
+        print("Intellibot Error:", e)
+        return {"reply": "⚠️ Intellibot is temporarily unavailable."}
 
 # ===============================
 # LOGOUT
